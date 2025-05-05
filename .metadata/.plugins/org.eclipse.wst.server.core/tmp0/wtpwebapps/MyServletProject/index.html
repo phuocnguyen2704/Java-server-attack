@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Authentication</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>User Authentication</h1>
+        <div id="authForms">
+            <div id="loginForm">
+                <h2>Đăng Nhập</h2>
+                <form id="login" action="AuthServlet" method="post">
+                    <input type="hidden" name="action" value="login">
+                    <label for="loginUsername">Tên người dùng:</label>
+                    <input type="text" id="loginUsername" name="username" required>
+                    <label for="loginPassword">Mật khẩu:</label>
+                    <input type="password" id="loginPassword" name="password" required>
+                    <button type="submit">Đăng Nhập</button>
+                </form>
+                <p>Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký tại đây</a></p>
+            </div>
+            <div id="registerForm" style="display:none;">
+                <h2>Đăng Ký</h2>
+                <form id="register" action="AuthServlet" method="post">
+                    <input type="hidden" name="action" value="register">
+                    <label for="registerUsername">Tên người dùng:</label>
+                    <input type="text" id="registerUsername" name="username" required>
+                    <label for="registerPassword">Mật khẩu:</label>
+                    <input type="password" id="registerPassword" name="password" required>
+                    <button type="submit">Đăng Ký</button>
+                </form>
+                <p>Đã có tài khoản? <a href="#" onclick="showLogin()">Đăng nhập tại đây</a></p>
+            </div>
+        </div>
+        <div id="result"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

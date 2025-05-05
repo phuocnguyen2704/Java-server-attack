@@ -1,0 +1,65 @@
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('userForm');
+    const usernameInput = document.getElementById('username');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault(); // Ngăn chặn hành vi mặc định của form
+
+        // Lấy giá trị username và làm sạch
+        let username = usernameInput.value.trim();
+
+        // Xác thực đầu vào
+        if (username === '') {
+            showMessage('Please enter a username.', 'error');
+            return;
+        }
+
+        // Kiểm tra ký tự hợp lệ (chỉ chữ, số, và một số ký tự đặc biệt)
+        const validUsernamePattern = /^[a-zA-Z0-9_-]{3,20}$/;
+        if (!validUsernamePattern.test(username)) {
+            showMessage('Username must be 3-20 characters long and contain only letters, numbers, underscores, or hyphens.', 'error');
+            return;
+        }
+
+        // Gửi yêu cầu POST đến Servlet
+        try {
+            const response = await fetch('UserServlet', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `username=${encodeURIComponent(username)}`
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const html = await response.text();
+            // Hiển thị phản hồi từ Servlet trong #result
+            resultDiv.innerHTML = html;
+        } catch (error) {
+            showMessage('Error submitting form: ' + error.message, 'error');
+        }
+    });
+
+    // Hàm hiển thị thông báo lỗi hoặc thành công
+    function showMessage(message, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = message;
+        messageDiv.style.padding = '10px';
+        messageDiv.style.marginTop = '10px';
+        messageDiv.style.borderRadius = '4px';
+        messageDiv.style.color = 'white';
+        messageDiv.style.backgroundColor = type === 'error' ? '#dc3545' : '#28a745';
+
+        resultDiv.appendChild(messageDiv);
+
+        // Xóa thông báo sau 3 giây
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 3000);
+    }
+});

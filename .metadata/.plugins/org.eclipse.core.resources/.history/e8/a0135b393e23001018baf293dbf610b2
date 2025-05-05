@@ -1,0 +1,103 @@
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+/**
+ * Servlet implementation class MyServlet
+ */
+@WebServlet("/MyServlet")
+public class MyServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Default constructor.
+     */
+    public MyServlet() {
+        super();
+    }
+
+    /**
+     * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+     */
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // Set response content type
+        response.setContentType("text/html; charset=UTF-8");
+        
+        // Get writer
+        PrintWriter out = response.getWriter();
+        
+        // Create HTML response
+        out.println("<!DOCTYPE html>");
+        out.println("<html>");
+        out.println("<head>");
+        out.println("<title>My Servlet</title>");
+        out.println("<style>");
+        out.println("body { font-family: Arial, sans-serif; margin: 40px; }");
+        out.println("h1 { color: #333; }");
+        out.println(".info { background: #f0f0f0; padding: 20px; border-radius: 5px; }");
+        out.println("</style>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("<h1>Welcome to My Servlet</h1>");
+        out.println("<div class='info'>");
+        out.println("<p><strong>Request Method:</strong> " + request.getMethod() + "</p>");
+        out.println("<p><strong>Context Path:</strong> " + request.getContextPath() + "</p>");
+        out.println("<p><strong>Servlet Path:</strong> " + request.getServletPath() + "</p>");
+        out.println("<p><strong>Server Time:</strong> " + new java.util.Date().toString() + "</p>");
+        out.println("</div>");
+        out.println("<p><a href='" + request.getContextPath() + "'>Back to Home</a></p>");
+        out.println("</body>");
+        out.println("</html>");
+        
+        out.close();
+    }
+
+    /**
+     * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+     */
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // Set response content type
+        response.setContentType("text/html; charset=UTF-8");
+        
+        PrintWriter out = response.getWriter();
+        
+        // Get parameter from POST request
+        String userName = request.getParameter("username");
+        if (userName == null || userName.trim().isEmpty()) {
+            userName = "Guest";
+        }
+        
+        // Create HTML response
+        out.println("<!DOCTYPE html>");
+        out.println("<html>");
+        out.println("<head>");
+        out.println("<title>My Servlet - POST Response</title>");
+        out.println("<style>");
+        out.println("body { font-family: Arial, sans-serif; margin: 40px; }");
+        out.println("h1 { color: #333; }");
+        out.println(".info { background: #f0f0f0; padding: 20px; border-radius: 5px; }");
+        out.println("</style>");
+        out.println("</head>");
+        out.println("<body>");
+        out.println("<h1>POST Request Processed</h1>");
+        out.println("<div class='info'>");
+        out.println("<p><strong>Hello, " + userName + "!</strong></p>");
+        out.println("<p><strong>Request Method:</strong> " + request.getMethod() + "</p>");
+        out.println("<p><strong>Context Path:</strong> " + request.getContextPath() + "</p>");
+        out.println("<p><strong>Servlet Path:</strong> " + request.getServletPath() + "</p>");
+        out.println("<p><strong>Server Time:</strong> " + new java.util.Date().toString() + "</p>");
+        out.println("</div>");
+        out.println("<p><a href='" + request.getContextPath() + "'>Back to Home</a></p>");
+        out.println("</body>");
+        out.println("</html>");
+        
+        out.close();
+    }
+}
