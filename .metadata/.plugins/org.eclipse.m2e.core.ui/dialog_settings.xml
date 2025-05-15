@@ -2,15 +2,17 @@
 <section name="Workbench">
 	<section name="wizardPage">
 		<list key="groupId">
-			<item value="TridentShellAgent"/>
 			<item value="MyServletProject"/>
+			<item value="LoginWeb"/>
+			<item value="TridentShellAgent"/>
 			<item value="Server_app"/>
 		</list>
 		<list key="name">
 		</list>
 		<list key="artifactId">
-			<item value="TridentShellAgent"/>
 			<item value="MyServletProject"/>
+			<item value="LoginWeb"/>
+			<item value="TridentShellAgent"/>
 			<item value="Server_app"/>
 		</list>
 		<list key="version">
@@ -31,6 +33,7 @@
 	</section>
 	<section name="MavenProjectWizardLocationPage">
 		<list key="location">
+			<item value="C:\Users\Hi\eclipse-workspace\TridentShellAgent"/>
 			<item value="C:\Users\Hi\eclipse-workspace"/>
 			<item value="C:\Users\Hi\eclipse-workspace\Server_app"/>
 		</list>
@@ -75,16 +78,14 @@
 	</section>
 	<section name="MavenProjectWizardArtifactPage">
 		<list key="groupId">
-			<item value="com.tridentshell"/>
-			<item value="com.example"/>
+			<item value="com.da_uit"/>
 		</list>
 		<list key="name">
 		</list>
 		<list key="artifactId">
-			<item value="tridentshell-project"/>
-			<item value="my-project"/>
-			<item value="Tridentshell_project"/>
-			<item value="tridentshellProject"/>
+			<item value="TridentShell"/>
+			<item value="TridentShellAgent_temp"/>
+			<item value="1TridentShellAgent_"/>
 		</list>
 		<list key="projectNameTemplate">
 			<item value="[artifactId]"/>

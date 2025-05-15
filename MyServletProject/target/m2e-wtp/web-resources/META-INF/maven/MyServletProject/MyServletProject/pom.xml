@@ -12,9 +12,9 @@
       <scope>provided</scope>
     </dependency>
 	<dependency>
-	    <groupId>org.mongodb</groupId>
+    <groupId>org.mongodb</groupId>
 	    <artifactId>mongo-java-driver</artifactId>
-	    <version>3.12.14</version>
+	    <version>3.12.11</version> <!-- Hoặc phiên bản mới nhất -->
 	</dependency>
   </dependencies>
   <build>
